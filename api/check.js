@@ -1,11 +1,9 @@
-import { sql } from "@vercel/postgres";
+const { sql } = require("@vercel/postgres");
 
-export default async function handler(req, res) {
-  // Allow dari Roblox
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
 
-  const { key, hwid } = req.method === "POST" ? req.body : req.query;
+  const { key, hwid } = req.query;
 
   if (!key) {
     return res.status(400).json({ valid: false, message: "Key tidak diberikan." });
@@ -25,34 +23,20 @@ export default async function handler(req, res) {
 
     const row = result.rows[0];
 
-    // HWID Lock: kalau key belum pernah dipakai, bind ke HWID ini
     if (hwid) {
       if (!row.hwid) {
-        // Bind HWID pertama kali
-        await sql`
-          UPDATE keys SET hwid = ${hwid}, last_used_at = NOW()
-          WHERE key_value = ${key}
-        `;
+        await sql`UPDATE keys SET hwid = ${hwid}, last_used_at = NOW() WHERE key_value = ${key}`;
       } else if (row.hwid !== hwid) {
-        return res.status(200).json({
-          valid: false,
-          message: "Key ini sudah terikat ke perangkat lain.",
-        });
+        return res.status(200).json({ valid: false, message: "Key ini sudah terikat ke perangkat lain." });
       } else {
-        // HWID cocok, update last used
         await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
       }
     } else {
       await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
     }
 
-    return res.status(200).json({
-      valid: true,
-      message: "Key valid!",
-      label: row.label,
-      expires_at: row.expires_at,
-    });
+    return res.status(200).json({ valid: true, message: "Key valid!", label: row.label, expires_at: row.expires_at });
   } catch (err) {
     return res.status(500).json({ valid: false, message: "Server error: " + err.message });
   }
-}
+};
