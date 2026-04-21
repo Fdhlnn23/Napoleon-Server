@@ -32,9 +32,28 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ scripts: result.rows });
     }
 
+    const protocol = req.headers["x-forwarded-proto"] || "http";
+    const host = req.headers.host;
+    const baseUrl = `${protocol}://${host}`;
+
     if (!key) {
+      const genericLoader = `
+local key = getgenv and getgenv().Key or _G.Key
+if not key then return warn("❌ Key tidak ditemukan! Set getgenv().Key terlebih dahulu.") end
+local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
+local placeId = tostring(game.PlaceId)
+local univId = tostring(game.GameId)
+local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_id=" .. placeId .. "&univ_id=" .. univId
+local success, result = pcall(function() return game:HttpGet(url) end)
+if success then
+    local f, err = loadstring(result)
+    if f then f() else warn(err) end
+else
+    warn("❌ Gagal menghubungi server.")
+end
+      `.trim();
       res.setHeader("Content-Type", "text/plain");
-      return res.status(200).send('error("Key diperlukan.")');
+      return res.status(200).send(genericLoader);
     }
 
     // Validasi key
@@ -91,8 +110,23 @@ module.exports = async function handler(req, res) {
       return res.status(200).send(r.rows[0].content);
     }
 
+    const specificLoader = `
+local key = "${key}"
+local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
+local placeId = tostring(game.PlaceId)
+local univId = tostring(game.GameId)
+local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_id=" .. placeId .. "&univ_id=" .. univId
+local success, result = pcall(function() return game:HttpGet(url) end)
+if success then
+    local f, err = loadstring(result)
+    if f then f() else warn(err) end
+else
+    warn("❌ Gagal menghubungi server.")
+end
+    `.trim();
+
     res.setHeader("Content-Type", "text/plain");
-    return res.status(200).send('error("place_id, univ_id, atau id diperlukan.")');
+    return res.status(200).send(specificLoader);
   }
 
   if (req.method === "POST") {
