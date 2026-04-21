@@ -14,16 +14,18 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (!checkSecret(req)) return res.status(401).json({ error: "Unauthorized" });
 
+  try { await sql`ALTER TABLE keys ADD COLUMN IF NOT EXISTS discord_id VARCHAR(64)`; } catch (e) {}
+
   if (req.method === "GET") {
     const result = await sql`SELECT * FROM keys ORDER BY created_at DESC`;
     return res.status(200).json({ keys: result.rows });
   }
 
   if (req.method === "POST") {
-    const { label, expires_days, custom_key } = req.body;
+    const { label, expires_days, custom_key, discord_id } = req.body;
     const keyValue = custom_key || uuidv4().replace(/-/g, "").substring(0, 32).toUpperCase();
     const expiresAt = expires_days ? new Date(Date.now() + expires_days * 86400000) : null;
-    const result = await sql`INSERT INTO keys (key_value, label, expires_at) VALUES (${keyValue}, ${label || null}, ${expiresAt}) RETURNING *`;
+    const result = await sql`INSERT INTO keys (key_value, label, expires_at, discord_id) VALUES (${keyValue}, ${label || null}, ${expiresAt}, ${discord_id || null}) RETURNING *`;
     return res.status(201).json({ success: true, key: result.rows[0] });
   }
 
