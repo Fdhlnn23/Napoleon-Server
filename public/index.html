@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RBX KeyGuard — Sistem Key Roblox</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #050810;
+    --surface: #0d1120;
+    --border: #1e2a45;
+    --accent: #ff3c6e;
+    --accent2: #00d4ff;
+    --text: #e8ecf5;
+    --muted: #6b7a9e;
+    --green: #00ff88;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  /* Glow blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    opacity: .3;
+  }
+  .blob-1 { width: 600px; height: 600px; top: -200px; left: -200px; background: #ff3c6e; }
+  .blob-2 { width: 500px; height: 500px; bottom: -100px; right: -100px; background: #00d4ff; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; width: 100%;
+    padding: 1.2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,8,16,.8);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .logo {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    padding: .2rem .6rem;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    border-radius: 20px;
+    letter-spacing: .1em;
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--accent);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    padding: .4rem 1rem;
+    border: 1px solid rgba(255,60,110,.3);
+    border-radius: 20px;
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  h1 .line2 { color: var(--accent); }
+  .subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  /* Key checker demo */
+  .checker-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    overflow: hidden;
+  }
+  .checker-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .checker-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    letter-spacing: .1em;
+  }
+  .input-row {
+    display: flex; gap: .75rem;
+  }
+  input[type="text"] {
+    flex: 1;
+    background: #0a0e1a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .9rem;
+    padding: .85rem 1rem;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type="text"]:focus { border-color: var(--accent2); }
+  .btn {
+    padding: .85rem 1.5rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: .9rem;
+    transition: all .2s;
+    background: linear-gradient(135deg, var(--accent), #c0285a);
+    color: #fff;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,60,110,.3); }
+  .btn:active { transform: translateY(0); }
+  .result {
+    margin-top: 1rem;
+    padding: .75rem 1rem;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    display: none;
+  }
+  .result.valid   { background: rgba(0,255,136,.08); border: 1px solid rgba(0,255,136,.3); color: var(--green); }
+  .result.invalid { background: rgba(255,60,110,.08); border: 1px solid rgba(255,60,110,.3); color: var(--accent); }
+
+  /* Features */
+  .features {
+    padding: 5rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .section-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+    letter-spacing: -0.02em;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+  .feat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    transition: border-color .2s, transform .2s;
+  }
+  .feat-card:hover { border-color: var(--accent2); transform: translateY(-4px); }
+  .feat-icon {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+  .feat-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; }
+  .feat-card p { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+  /* Code section */
+  .code-section {
+    padding: 5rem 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    overflow-x: auto;
+    position: relative;
+  }
+  pre::before {
+    content: 'Lua';
+    position: absolute; top: .75rem; right: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .kw { color: #c792ea; }
+  .str { color: #c3e88d; }
+  .fn { color: #82aaff; }
+  .cm { color: var(--muted); font-style: italic; }
+  .var { color: var(--accent2); }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: .8rem;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.5rem; }
+    .input-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<nav>
+  <div class="logo">RBX<span>KeyGuard</span></div>
+  <div class="badge">v1.0</div>
+</nav>
+
+<section class="hero">
+  <div class="tag">🔐 Roblox Script Protection</div>
+  <h1>Protect Your<br><span class="line2">Script.</span></h1>
+  <p class="subtitle">Sistem validasi key untuk script Roblox kamu. Kelola lewat bot Discord, validasi instan lewat API.</p>
+
+  <div class="checker-card">
+    <div class="checker-label">// TEST KEY KAMU</div>
+    <div class="input-row">
+      <input type="text" id="keyInput" placeholder="Masukkan key..." maxlength="64"/>
+      <button class="btn" onclick="checkKey()">Cek</button>
+    </div>
+    <div class="result" id="result"></div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="section-title">Fitur Sistem</div>
+  <div class="grid-3">
+    <div class="feat-card">
+      <div class="feat-icon">🔑</div>
+      <h3>Key Management</h3>
+      <p>Buat, edit, dan hapus key kapan saja lewat slash command Discord yang intuitif.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">💻</div>
+      <h3>HWID Lock</h3>
+      <p>Key otomatis terikat ke PC pertama yang menggunakannya. Reset HWID lewat Discord.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⏰</div>
+      <h3>Expiry Date</h3>
+      <p>Set berapa hari key berlaku. Key expired otomatis ditolak saat validasi.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⚡</div>
+      <h3>Validasi Instan</h3>
+      <p>API di-host di Vercel Edge — respon cepat dari mana saja di dunia.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🤖</div>
+      <h3>Discord Bot</h3>
+      <p>Kelola semua key langsung dari server Discord kamu dengan slash commands.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🛡️</div>
+      <h3>Aman</h3>
+      <p>Bot diamankan dengan API secret & admin role. Database di Vercel Postgres.</p>
+    </div>
+  </div>
+</section>
+
+<section class="code-section">
+  <div class="section-title">Contoh Penggunaan di Script</div>
+  <pre><code><span class="cm">-- Roblox Script Kamu</span>
+<span class="kw">local</span> <span class="var">HttpService</span> = <span class="fn">game</span>:GetService(<span class="str">"HttpService"</span>)
+
+<span class="kw">local</span> <span class="var">API_URL</span> = <span class="str">"https://YOUR_PROJECT.vercel.app/api/check"</span>
+<span class="kw">local</span> <span class="var">key</span> = <span class="str">"MASUKKAN_KEY_DISINI"</span>
+<span class="kw">local</span> <span class="var">hwid</span> = <span class="fn">game</span>.Players.LocalPlayer.UserId
+
+<span class="kw">local</span> <span class="var">result</span> = <span class="var">HttpService</span>:<span class="fn">RequestAsync</span>({
+    Url = <span class="var">API_URL</span> .. <span class="str">"?key="</span> .. <span class="var">key</span> .. <span class="str">"&hwid="</span> .. <span class="var">hwid</span>,
+    Method = <span class="str">"GET"</span>
+})
+
+<span class="kw">local</span> <span class="var">data</span> = <span class="var">HttpService</span>:<span class="fn">JSONDecode</span>(<span class="var">result</span>.Body)
+
+<span class="kw">if</span> <span class="var">data</span>.valid <span class="kw">then</span>
+    <span class="fn">print</span>(<span class="str">"✅ Key valid! Selamat datang."</span>)
+    <span class="cm">-- Lanjutkan script kamu di sini</span>
+<span class="kw">else</span>
+    <span class="fn">warn</span>(<span class="str">"❌ "</span> .. <span class="var">data</span>.message)
+    <span class="cm">-- Hentikan script</span>
+<span class="kw">end</span></code></pre>
+</section>
+
+<footer>
+  RBX KeyGuard — Built with Vercel & Discord.js &nbsp;|&nbsp; Powered by Vercel Postgres
+</footer>
+
+<script>
+async function checkKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  const result = document.getElementById('result');
+  if (!key) return;
+
+  result.style.display = 'block';
+  result.className = 'result';
+  result.textContent = '⏳ Mengecek...';
+
+  try {
+    const res = await fetch('/api/check?key=' + encodeURIComponent(key));
+    const data = await res.json();
+    result.className = 'result ' + (data.valid ? 'valid' : 'invalid');
+    result.textContent = (data.valid ? '✅ ' : '❌ ') + data.message;
+    if (data.valid && data.label) result.textContent += ' (' + data.label + ')';
+  } catch {
+    result.className = 'result invalid';
+    result.textContent = '❌ Tidak bisa menghubungi server.';
+  }
+}
+
+document.getElementById('keyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkKey();
+});
+</script>
+
+</body>
+</html>
