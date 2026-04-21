@@ -293,25 +293,18 @@ async function deleteScript() {
 
 function updateUrlBox(id, place_ids) {
   const ids = place_ids ? place_ids.split(',').map(x=>x.trim()).filter(Boolean) : [];
-  const comment = ids.length>0 ? '-- IDs: '+ids.join(', ') : '-- ⚠️ Belum ada Place ID / Univ ID!';
+  const comment = ids.length>0 ? '-- Game: '+ids.join(', ') : '-- ⚠️ Belum ada Place/Univ ID!';
   document.getElementById('luaSnippet').innerHTML =
     '<span class="cm">'+comment+'</span>\n'+
-    '<span class="kw">local</span> <span class="var">key</span> = <span class="str">"KEY_PEMBELI_DISINI"</span>\n'+
-    '<span class="kw">local</span> <span class="var">hwid</span> = tostring(game.Players.LocalPlayer.UserId)\n'+
-    '<span class="kw">local</span> <span class="var">placeId</span> = tostring(game.PlaceId)  <span class="cm">-- otomatis detect map!</span>\n'+
-    '<span class="kw">local</span> <span class="var">univId</span> = tostring(game.GameId)\n\n'+
-    '<span class="var">loadstring</span>(game:HttpGet(\n'+
-    '  <span class="str">"'+BASE+'/api/script?key="</span> .. <span class="var">key</span> ..\n'+
-    '  <span class="str">"&hwid="</span> .. <span class="var">hwid</span> ..\n'+
-    '  <span class="str">"&place_id="</span> .. <span class="var">placeId</span> ..\n'+
-    '  <span class="str">"&univ_id="</span> .. <span class="var">univId</span>\n'+
-    '))()';
-  document.getElementById('scriptUrl').textContent = BASE+'/api/script?key=KEY&hwid=HWID&place_id=PLACE_ID&univ_id=UNIV_ID';
+    '<span class="cm">-- Loadstring ini akan otomatis mengambil HWID dan Map ID 🔮</span>\n'+
+    '<span class="var">getgenv</span>().Key = <span class="str">"KEY_PEMBELI_DISINI"</span>\n'+
+    '<span class="var">loadstring</span>(game:HttpGet(<span class="str">"'+BASE+'/api/script"</span>))()';
+  document.getElementById('scriptUrl').textContent = BASE+'/api/script';
   document.getElementById('urlBox').style.display = 'block';
 }
 
 function copyLoadstring() {
-  const ls = 'local key = "KEY_PEMBELI_DISINI"\nlocal hwid = tostring(game.Players.LocalPlayer.UserId)\nlocal placeId = tostring(game.PlaceId)\nlocal univId = tostring(game.GameId)\nloadstring(game:HttpGet("'+BASE+'/api/script?key="..key.."&hwid="..hwid.."&place_id="..placeId.."&univ_id="..univId))()';
+  const ls = 'getgenv().Key = "KEY_PEMBELI_DISINI"\nloadstring(game:HttpGet("'+BASE+'/api/script"))()';
   navigator.clipboard.writeText(ls);
   showToast('Loadstring disalin!','success');
 }
