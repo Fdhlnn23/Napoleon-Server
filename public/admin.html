@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Dashboard — RBX KeyGuard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0c0c0f;
+  --panel: #13131a;
+  --border: #222230;
+  --accent: #7c3aed;
+  --accent2: #a78bfa;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --text: #f1f0ff;
+  --muted: #6b6b8a;
+  --code-bg: #0a0a10;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Login overlay ── */
+#loginOverlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+}
+.login-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 340px;
+  text-align: center;
+}
+.login-box h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  letter-spacing: .1em;
+  color: var(--accent2);
+  margin-bottom: .5rem;
+}
+.login-box p { color: var(--muted); font-size: .85rem; margin-bottom: 1.5rem; }
+.login-box input {
+  width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .85rem 1rem;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: .85rem;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.login-box input:focus { border-color: var(--accent); }
+.login-box input[type="password"] { letter-spacing: .2em; }
+
+/* ── Buttons ── */
+.btn {
+  padding: .75rem 1.5rem;
+  border: none; border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: .9rem;
+  transition: all .2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+}
+.btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
+.btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-success { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+.btn-success:hover { background: rgba(16,185,129,.25); }
+.btn-sm { padding: .4rem .9rem; font-size: .8rem; }
+
+/* ── Layout ── */
+header {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel);
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: .1em; }
+.logo span { color: var(--accent2); }
+#logoutBtn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: .4rem 1rem;
+  border-radius: 6px; cursor: pointer; font-size: .8rem;
+  transition: all .2s;
+}
+#logoutBtn:hover { color: var(--text); border-color: var(--text); }
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+}
+
+/* ── Sidebar ── */
+aside {
+  border-right: 1px solid var(--border);
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.aside-title {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .15em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: .25rem;
+}
+.script-list { display: flex; flex-direction: column; gap: .5rem; }
+.script-item {
+  padding: .75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.script-item:hover { border-color: var(--accent); background: rgba(124,58,237,.08); }
+.script-item.active { border-color: var(--accent); background: rgba(124,58,237,.12); }
+.script-item-name { font-size: .85rem; font-weight: 500; }
+.script-item-id {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+  background: var(--code-bg);
+  padding: .1rem .4rem;
+  border-radius: 4px;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.dot.inactive { background: var(--red); }
+
+.new-script-btn {
+  width: 100%;
+  padding: .75rem;
+  background: rgba(124,58,237,.1);
+  border: 1px dashed rgba(124,58,237,.4);
+  border-radius: 8px;
+  color: var(--accent2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.new-script-btn:hover { background: rgba(124,58,237,.2); }
+
+/* ── Editor area ── */
+.editor-area {
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.editor-header {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.editor-header input[type="text"] {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  transition: border-color .2s;
+  min-width: 200px;
+}
+.editor-header input:focus { border-color: var(--accent); }
+
+.editor-wrap {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--code-bg);
+  min-height: 400px;
+  display: flex; flex-direction: column;
+}
+.editor-topbar {
+  padding: .6rem 1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.editor-lang {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.editor-dots { display: flex; gap: .4rem; }
+.editor-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.d1 { background: #ff5f57; }
+.d2 { background: #ffbd2e; }
+.d3 { background: #28ca41; }
+
+textarea#scriptContent {
+  flex: 1;
+  width: 100%;
+  background: var(--code-bg);
+  border: none;
+  color: #c9d1d9;
+  font-family: 'Space Mono', monospace;
+  font-size: .82rem;
+  line-height: 1.7;
+  padding: 1.25rem;
+  resize: none;
+  outline: none;
+  min-height: 400px;
+  tab-size: 4;
+}
+
+.url-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+.url-box-label {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: .5rem;
+}
+.url-row { display: flex; gap: .75rem; align-items: center; }
+.url-value {
+  flex: 1;
+  font-family: 'Space Mono', monospace;
+  font-size: .78rem;
+  color: var(--accent2);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .5rem .75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.copy-btn {
+  padding: .5rem 1rem;
+  background: rgba(167,139,250,.1);
+  border: 1px solid rgba(167,139,250,.3);
+  border-radius: 6px;
+  color: var(--accent2);
+  font-size: .78rem;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.copy-btn:hover { background: rgba(167,139,250,.2); }
+
+.action-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  padding: .85rem 1.5rem;
+  border-radius: 10px;
+  font-size: .85rem;
+  font-weight: 600;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all .3s;
+  z-index: 999;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: rgba(16,185,129,.15); border: 1px solid var(--green); color: var(--green); }
+.toast.error { background: rgba(239,68,68,.15); border: 1px solid var(--red); color: var(--red); }
+
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--muted); gap: 1rem; text-align: center;
+}
+.empty-state .icon { font-size: 3rem; opacity: .4; }
+
+@media (max-width: 768px) {
+  main { grid-template-columns: 1fr; }
+  aside { border-right: none; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <h2>RBX<span>Admin</span></h2>
+    <p>Masukkan API Secret untuk masuk</p>
+    <input type="password" id="secretInput" placeholder="API Secret..." />
+    <button class="btn btn-primary" onclick="doLogin()">Masuk</button>
+    <p id="loginErr" style="color:#ef4444;font-size:.8rem;margin-top:.75rem;display:none">Secret salah!</p>
+  </div>
+</div>
+
+<header>
+  <div class="logo">RBX<span>Admin</span></div>
+  <button id="logoutBtn" onclick="logout()">Keluar</button>
+</header>
+
+<main>
+  <aside>
+    <div>
+      <div class="aside-title">Scripts</div>
+      <div class="script-list" id="scriptList">
+        <div style="color:var(--muted);font-size:.8rem;padding:.5rem">Memuat...</div>
+      </div>
+    </div>
+    <button class="new-script-btn" onclick="newScript()">+ Script Baru</button>
+  </aside>
+
+  <div class="editor-area" id="editorArea">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📜</div>
+      <div>Pilih script di kiri atau buat baru</div>
+    </div>
+
+    <div id="editorPanel" style="display:none;flex-direction:column;gap:1rem;flex:1">
+      <div class="editor-header">
+        <input type="text" id="scriptName" placeholder="Nama Script..." />
+        <div class="action-row">
+          <button class="btn btn-success btn-sm" onclick="saveScript()">💾 Simpan</button>
+          <button class="btn btn-danger btn-sm" id="deleteBtn" onclick="deleteScript()" style="display:none">🗑️ Hapus</button>
+        </div>
+      </div>
+
+      <div class="editor-wrap">
+        <div class="editor-topbar">
+          <div class="editor-dots">
+            <span class="d1"></span><span class="d2"></span><span class="d3"></span>
+          </div>
+          <div class="editor-lang">Lua · Roblox Script</div>
+        </div>
+        <textarea id="scriptContent" placeholder="-- Paste script Roblox kamu di sini...
+-- Key sudah otomatis dicek sebelum script ini dijalankan
+
+print('Script loaded!')
+-- kode kamu..."></textarea>
+      </div>
+
+      <div class="url-box" id="urlBox" style="display:none">
+        <div class="url-box-label">🔗 Loadstring URL (pakai di Roblox)</div>
+        <div class="url-row">
+          <div class="url-value" id="scriptUrl"></div>
+          <button class="copy-btn" onclick="copyUrl()">Copy URL</button>
+          <button class="copy-btn" onclick="copyLoadstring()">Copy Loadstring</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = window.location.origin;
+let SECRET = localStorage.getItem('rbx_secret') || '';
+let currentScriptId = null;
+let scripts = [];
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const val = document.getElementById('secretInput').value.trim();
+  if (!val) return;
+  // Test secret dengan list scripts
+  const res = await fetch(`${BASE}/api/script`, {
+    headers: { Authorization: `Bearer ${val}` }
+  });
+  if (res.ok) {
+    SECRET = val;
+    localStorage.setItem('rbx_secret', val);
+    document.getElementById('loginOverlay').style.display = 'none';
+    loadScripts();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('rbx_secret');
+  SECRET = '';
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('secretInput').value = '';
+}
+
+document.getElementById('secretInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Load scripts ───────────────────────────────────────────────────────────
+async function loadScripts() {
+  const res = await fetch(`${BASE}/api/script`, {
+    headers: { Authorization: `Bearer ${SECRET}` }
+  });
+  const data = await res.json();
+  scripts = data.scripts || [];
+  renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('scriptList');
+  if (scripts.length === 0) {
+    list.innerHTML = `<div style="color:var(--muted);font-size:.8rem;padding:.5rem">Belum ada script</div>`;
+    return;
+  }
+  list.innerHTML = scripts.map(s => `
+    <div class="script-item ${currentScriptId == s.id ? 'active' : ''}" onclick="selectScript(${s.id})">
+      <div>
+        <div class="script-item-name">${s.name}</div>
+        <div class="script-item-id">ID: ${s.id}</div>
+      </div>
+      <div class="dot ${s.is_active ? '' : 'inactive'}"></div>
+    </div>
+  `).join('');
+}
+
+// ── Select / load script ───────────────────────────────────────────────────
+async function selectScript(id) {
+  currentScriptId = id;
+  renderList();
+
+  // Fetch full content
+  const res = await fetch(`${BASE}/api/script?admin=1&id=${id}`, {
+    headers: { Authorization: `Bearer ${SECRET}` }
+  });
+
+  // Kita perlu endpoint terpisah untuk get content by id untuk admin
+  // Untuk sekarang ambil dari list dan minta content via POST trick
+  // Kita simpan content di memory saat upload
+  const s = scripts.find(x => x.id == id);
+  if (!s) return;
+
+  document.getElementById('emptyState').style.display = 'none';
+  const panel = document.getElementById('editorPanel');
+  panel.style.display = 'flex';
+  document.getElementById('scriptName').value = s.name;
+  document.getElementById('scriptContent').value = s._content || '';
+  document.getElementById('deleteBtn').style.display = 'inline-flex';
+
+  const url = `${BASE}/api/script?key=KEY_DISINI&hwid=HWID_DISINI&id=${id}`;
+  document.getElementById('scriptUrl').textContent = url;
+  document.getElementById('urlBox').style.display = 'block';
+}
+
+// ── New script ─────────────────────────────────────────────────────────────
+function newScript() {
+  currentScriptId = null;
+  renderList();
+  document.getElementById('emptyState').style.display = 'none';
+  const panel = document.getElementById('editorPanel');
+  panel.style.display = 'flex';
+  document.getElementById('scriptName').value = '';
+  document.getElementById('scriptContent').value = '';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('urlBox').style.display = 'none';
+}
+
+// ── Save script ────────────────────────────────────────────────────────────
+async function saveScript() {
+  const name = document.getElementById('scriptName').value.trim() || 'Script';
+  const content = document.getElementById('scriptContent').value;
+
+  if (!content.trim()) return showToast('Script tidak boleh kosong!', 'error');
+
+  const body = { name, content };
+  if (currentScriptId) body.id = currentScriptId;
+
+  const res = await fetch(`${BASE}/api/script`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SECRET}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    currentScriptId = data.script.id;
+    // Simpan content di memory
+    data.script._content = content;
+    const idx = scripts.findIndex(s => s.id == data.script.id);
+    if (idx >= 0) scripts[idx] = { ...data.script };
+    else scripts.unshift({ ...data.script });
+
+    renderList();
+    document.getElementById('deleteBtn').style.display = 'inline-flex';
+    const url = `${BASE}/api/script?key=KEY_DISINI&hwid=HWID_DISINI&id=${data.script.id}`;
+    document.getElementById('scriptUrl').textContent = url;
+    document.getElementById('urlBox').style.display = 'block';
+    showToast('✅ Script berhasil disimpan!', 'success');
+  } else {
+    showToast('❌ ' + data.error, 'error');
+  }
+}
+
+// ── Delete script ──────────────────────────────────────────────────────────
+async function deleteScript() {
+  if (!currentScriptId) return;
+  if (!confirm('Yakin mau hapus script ini?')) return;
+
+  const res = await fetch(`${BASE}/api/script`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SECRET}`
+    },
+    body: JSON.stringify({ id: currentScriptId })
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    scripts = scripts.filter(s => s.id != currentScriptId);
+    currentScriptId = null;
+    renderList();
+    document.getElementById('emptyState').style.display = 'flex';
+    document.getElementById('editorPanel').style.display = 'none';
+    showToast('🗑️ Script dihapus!', 'success');
+  }
+}
+
+// ── Copy utils ─────────────────────────────────────────────────────────────
+function copyUrl() {
+  const url = document.getElementById('scriptUrl').textContent;
+  navigator.clipboard.writeText(url);
+  showToast('URL disalin!', 'success');
+}
+
+function copyLoadstring() {
+  const url = document.getElementById('scriptUrl').textContent;
+  const ls = `loadstring(game:HttpGet("${url}"))()`;
+  navigator.clipboard.writeText(ls);
+  showToast('Loadstring disalin!', 'success');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+if (SECRET) {
+  document.getElementById('loginOverlay').style.display = 'none';
+  loadScripts();
+}
+</script>
+</body>
+</html>
