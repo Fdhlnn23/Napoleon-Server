@@ -1,7 +1,6 @@
-import { sql } from "@vercel/postgres";
+const { sql } = require("@vercel/postgres");
 
-export default async function handler(req, res) {
-  // Hanya bisa diakses dengan secret key
+module.exports = async function handler(req, res) {
   const { secret } = req.query;
   if (secret !== process.env.API_SECRET) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -24,4 +23,4 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-}
+};
