@@ -19,6 +19,8 @@ module.exports = async function handler(req, res) {
         last_used_at TIMESTAMP
       )
     `;
+    try { await sql`ALTER TABLE keys ADD COLUMN IF NOT EXISTS discord_id VARCHAR(64)`; } catch (e) {}
+
     return res.status(200).json({ success: true, message: "Database sudah siap!" });
   } catch (err) {
     return res.status(500).json({ error: err.message });
