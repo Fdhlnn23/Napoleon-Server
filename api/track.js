@@ -1,5 +1,55 @@
 const { sql } = require("@vercel/postgres");
 
+// Kirim execute log ke Discord webhook (Component V2)
+async function sendExecuteLog({ script, userid, username }) {
+  const webhookUrl = process.env.EXECUTE_LOG_WEBHOOK_URL;
+  if (!webhookUrl || webhookUrl.startsWith("ISI_")) return;
+
+  const now = new Date();
+  const timestamp = `<t:${Math.floor(now.getTime() / 1000)}:F>`;
+
+  const components = [
+    {
+      type: 17,
+      accent_color: 0x8A2BE2, // ungu
+      spoiler: false,
+      components: [
+        {
+          type: 10,
+          content: "## 🚀 Script Executed",
+        },
+        {
+          type: 14,
+          divider: true,
+          spacing: 1,
+        },
+        {
+          type: 10,
+          content:
+            `- **👤 Username:** ${username || "Unknown"}\n` +
+            `- **🆔 UserID:** \`${userid || "N/A"}\`\n` +
+            `- **📜 Script:** \`${script || "N/A"}\`\n` +
+            `- **🕐 Time:** ${timestamp}`,
+        },
+      ],
+    },
+  ];
+
+  try {
+    await fetch(webhookUrl + "?wait=false", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        components,
+        flags: 1 << 15, // IS_COMPONENTS_V2
+      }),
+    });
+  } catch (e) {
+    // Silent fail — tidak ganggu response ke Roblox
+    console.error("Webhook error:", e.message);
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -53,6 +103,13 @@ module.exports = async function handler(req, res) {
           last_executed_at = NOW()
       `;
     }
+
+    // Kirim execute log ke Discord webhook (fire-and-forget)
+    sendExecuteLog({
+      script: script || null,
+      userid: userid || null,
+      username: username || null,
+    });
 
     return res.status(200).json({ success: true });
   } catch (err) {
