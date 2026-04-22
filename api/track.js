@@ -1,9 +1,10 @@
 const { sql } = require("@vercel/postgres");
 
-// Kirim execute log ke Discord webhook (Component V2)
+// Kirim execute log ke Discord channel sebagai Bot (Component V2)
 async function sendExecuteLog({ script, userid, username }) {
-  const webhookUrl = process.env.EXECUTE_LOG_WEBHOOK_URL;
-  if (!webhookUrl || webhookUrl.startsWith("ISI_")) return;
+  const channelId = process.env.EXECUTE_LOG_CHANNEL_ID;
+  const token = process.env.DISCORD_TOKEN;
+  if (!channelId || !token || channelId.startsWith("ISI_")) return;
 
   const now = new Date();
   const timestamp = `<t:${Math.floor(now.getTime() / 1000)}:F>`;
@@ -11,7 +12,6 @@ async function sendExecuteLog({ script, userid, username }) {
   const components = [
     {
       type: 17,
-      accent_color: 0x8A2BE2, // ungu
       spoiler: false,
       components: [
         {
@@ -36,17 +36,24 @@ async function sendExecuteLog({ script, userid, username }) {
   ];
 
   try {
-    await fetch(webhookUrl + "?wait=false", {
+    const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bot ${token}`
+      },
       body: JSON.stringify({
         components,
         flags: 1 << 15, // IS_COMPONENTS_V2
       }),
     });
+    
+    if (!res.ok) {
+      console.error("Bot API Error:", await res.text());
+    }
   } catch (e) {
     // Silent fail — tidak ganggu response ke Roblox
-    console.error("Webhook error:", e.message);
+    console.error("Execute log network error:", e.message);
   }
 }
 
