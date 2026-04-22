@@ -364,7 +364,7 @@ async function checkKey() {
     const data = await res.json();
     result.className = 'result ' + (data.valid ? 'valid' : 'invalid');
     result.textContent = (data.valid ? '✅ ' : '❌ ') + data.message;
-    if (data.valid && data.label) result.textContent += ' (' + data.label + ')';
+    if (data.valid && data.discord_id) result.textContent += ' (Discord: ' + data.discord_id + ')';
   } catch {
     result.className = 'result invalid';
     result.textContent = '❌ Tidak bisa menghubungi server.';
