@@ -22,23 +22,22 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { label, expires_days, custom_key, discord_id } = req.body;
+    const { expires_days, custom_key, discord_id } = req.body;
     const randomHex = uuidv4().replace(/-/g, "").toUpperCase();
     const generatedKey = `NPLN-${randomHex.substring(0,4)}-${randomHex.substring(4,8)}-${randomHex.substring(8,9)}`;
     const keyValue = custom_key || generatedKey;
     const expiresAt = expires_days ? new Date(Date.now() + expires_days * 86400000) : null;
-    const result = await sql`INSERT INTO keys (key_value, label, expires_at, discord_id) VALUES (${keyValue}, ${label || null}, ${expiresAt}, ${discord_id || null}) RETURNING *`;
+    const result = await sql`INSERT INTO keys (key_value, expires_at, discord_id) VALUES (${keyValue}, ${expiresAt}, ${discord_id || null}) RETURNING *`;
     return res.status(201).json({ success: true, key: result.rows[0] });
   }
 
   if (req.method === "PUT") {
-    const { key_value, is_active, label, expires_days, reset_hwid, discord_id } = req.body;
+    const { key_value, is_active, expires_days, reset_hwid, discord_id } = req.body;
     if (!key_value) return res.status(400).json({ error: "key_value wajib diisi." });
     const expiresAt = expires_days ? new Date(Date.now() + expires_days * 86400000) : null;
     const result = await sql`
       UPDATE keys SET
         is_active  = COALESCE(${is_active ?? null}, is_active),
-        label      = COALESCE(${label ?? null}, label),
         expires_at = CASE WHEN ${expires_days != null} THEN ${expiresAt} ELSE expires_at END,
         hwid       = CASE WHEN ${reset_hwid === true} THEN NULL ELSE hwid END,
         discord_id = COALESCE(${discord_id ?? null}, discord_id)
