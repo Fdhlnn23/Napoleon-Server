@@ -21,7 +21,7 @@ async function sendExecuteLog({ script, userid, username, executor, placeid, key
         },
         {
           type: 10,
-          content: `**${key}** has executed the script.`
+          content: `**${username}** has executed the script.`
         },
         {
           type: 14,
