@@ -34,7 +34,7 @@ async function sendExecuteLog({ script, userid, username, executor, placeid, key
         },
         {
           type: 10,
-          content: `## Roblox Account:\n- **Username:** ${username}\n- **User ID:** \`${userid}\`\n\n## Napoleon Key:\n- **Key Script:** \`${key}\`\n- **Owner Key:** ${ownerKey}`
+          content: `### Roblox Account:\n- **Username:** ${username}\n- **User ID:** \`${userid}\`\n\n### Napoleon Key:\n- **Key Script:** \`${key}\`\n- **Owner Key:** ${ownerKey}`
         },
         {
           type: 14,
