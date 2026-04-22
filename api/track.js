@@ -1,7 +1,7 @@
 const { sql } = require("@vercel/postgres");
 
 // Kirim execute log ke Discord channel sebagai Bot (Component V2)
-async function sendExecuteLog({ script, userid, username }) {
+async function sendExecuteLog({ script, userid, username, executor, placeid, key, totalExecution, ownerKey }) {
   const channelId = process.env.EXECUTE_LOG_CHANNEL_ID;
   const token = process.env.DISCORD_TOKEN;
   if (!channelId || !token || channelId.startsWith("ISI_")) return;
@@ -12,27 +12,58 @@ async function sendExecuteLog({ script, userid, username }) {
   const components = [
     {
       type: 17,
+      accent_color: null,
       spoiler: false,
       components: [
         {
           type: 10,
-          content: "## 🚀 Script Executed",
+          content: "# Execution Logs"
+        },
+        {
+          type: 10,
+          content: `**${key}** has executed the script.`
         },
         {
           type: 14,
           divider: true,
-          spacing: 1,
+          spacing: 1
         },
         {
           type: 10,
-          content:
-            `- **👤 Username:** ${username || "Unknown"}\n` +
-            `- **🆔 UserID:** \`${userid || "N/A"}\`\n` +
-            `- **📜 Script:** \`${script || "N/A"}\`\n` +
-            `- **🕐 Time:** ${timestamp}`,
+          content: "# User Information"
         },
-      ],
-    },
+        {
+          type: 10,
+          content: `## Roblox Account:\n- **Username:** ${username}\n- **User ID:** \`${userid}\`\n\n## Napoleon Key:\n- **Key Script:** \`${key}\`\n- **Owner Key:** ${ownerKey}`
+        },
+        {
+          type: 14,
+          divider: true,
+          spacing: 1
+        },
+        {
+          type: 10,
+          content: "# Execution Information"
+        },
+        {
+          type: 10,
+          content: `- **Executor:** ${executor}\n- **Total Execution:** ${totalExecution}\n- **Execution Time:** ${timestamp}\n- **Game Place ID:** ${placeid}\n- **Script ID:** \`${script}\``
+        },
+        {
+          type: 1,
+          components: [
+            {
+              type: 2,
+              style: 5,
+              label: "View Player Account",
+              url: `https://www.roblox.com/users/${userid}/profile`,
+              emoji: null,
+              disabled: false
+            }
+          ]
+        }
+      ]
+    }
   ];
 
   try {
@@ -81,7 +112,7 @@ module.exports = async function handler(req, res) {
       )
     `;
 
-    const { script, userid, username } = req.query;
+    const { script, userid, username, executor, placeid, key } = req.query;
     
     if (script) {
       const scriptName = String(script).substring(0, 128);
@@ -95,12 +126,13 @@ module.exports = async function handler(req, res) {
       `;
     }
 
+    let totalExecution = 1;
     if (userid) {
       const safeUserId = String(userid).substring(0, 64);
       const safeUsername = username ? String(username).substring(0, 128) : null;
       
       // Upsert query stat user
-      await sql`
+      const userResult = await sql`
         INSERT INTO user_stats (userid, username, total_executes, last_executed_at)
         VALUES (${safeUserId}, ${safeUsername}, 1, NOW())
         ON CONFLICT (userid)
@@ -108,14 +140,33 @@ module.exports = async function handler(req, res) {
           total_executes = user_stats.total_executes + 1,
           username = COALESCE(${safeUsername}, user_stats.username),
           last_executed_at = NOW()
+        RETURNING total_executes
       `;
+      totalExecution = userResult.rows[0].total_executes;
+    }
+
+    let ownerKeyStr = "N/A";
+    if (key && key !== "Unknown_Key") {
+      try {
+        const keyResult = await sql`SELECT discord_id FROM keys WHERE key_value = ${key} LIMIT 1`;
+        if (keyResult.rows.length > 0) {
+          ownerKeyStr = `<@${keyResult.rows[0].discord_id}>`;
+        }
+      } catch (e) {
+        console.error("Key lookup err:", e.message);
+      }
     }
 
     // Kirim execute log ke Discord webhook
     await sendExecuteLog({
-      script: script || null,
-      userid: userid || null,
-      username: username || null,
+      script: script || "N/A",
+      userid: userid || "N/A",
+      username: username || "Unknown",
+      executor: executor || "Unknown",
+      placeid: placeid || "Unknown",
+      key: key || "Unknown_Key",
+      totalExecution,
+      ownerKey: ownerKeyStr
     });
 
     return res.status(200).json({ success: true });
