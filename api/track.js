@@ -111,8 +111,8 @@ module.exports = async function handler(req, res) {
       `;
     }
 
-    // Kirim execute log ke Discord webhook (fire-and-forget)
-    sendExecuteLog({
+    // Kirim execute log ke Discord webhook
+    await sendExecuteLog({
       script: script || null,
       userid: userid || null,
       username: username || null,
