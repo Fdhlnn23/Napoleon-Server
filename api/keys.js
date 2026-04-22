@@ -23,7 +23,9 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "POST") {
     const { label, expires_days, custom_key, discord_id } = req.body;
-    const keyValue = custom_key || uuidv4().replace(/-/g, "").substring(0, 32).toUpperCase();
+    const randomHex = uuidv4().replace(/-/g, "").toUpperCase();
+    const generatedKey = `NPLN-${randomHex.substring(0,4)}-${randomHex.substring(4,8)}-${randomHex.substring(8,9)}`;
+    const keyValue = custom_key || generatedKey;
     const expiresAt = expires_days ? new Date(Date.now() + expires_days * 86400000) : null;
     const result = await sql`INSERT INTO keys (key_value, label, expires_at, discord_id) VALUES (${keyValue}, ${label || null}, ${expiresAt}, ${discord_id || null}) RETURNING *`;
     return res.status(201).json({ success: true, key: result.rows[0] });
