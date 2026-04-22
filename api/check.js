@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
       await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
     }
 
-    return res.status(200).json({ valid: true, message: "Key valid!", label: row.label, expires_at: row.expires_at });
+    return res.status(200).json({ valid: true, message: "Key valid!", discord_id: row.discord_id, expires_at: row.expires_at });
   } catch (err) {
     return res.status(500).json({ valid: false, message: "Server error: " + err.message });
   }
