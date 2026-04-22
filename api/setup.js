@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
       CREATE TABLE IF NOT EXISTS keys (
         id SERIAL PRIMARY KEY,
         key_value VARCHAR(64) UNIQUE NOT NULL,
-        label VARCHAR(128),
+        discord_id VARCHAR(64),
         hwid VARCHAR(256),
         is_active BOOLEAN DEFAULT TRUE,
         expires_at TIMESTAMP,
@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
         last_used_at TIMESTAMP
       )
     `;
-    try { await sql`ALTER TABLE keys ADD COLUMN IF NOT EXISTS discord_id VARCHAR(64)`; } catch (e) {}
+    try { await sql`ALTER TABLE keys DROP COLUMN IF EXISTS label`; } catch (e) {}
 
     return res.status(200).json({ success: true, message: "Database sudah siap!" });
   } catch (err) {
