@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    const { key_value, is_active, label, expires_days, reset_hwid } = req.body;
+    const { key_value, is_active, label, expires_days, reset_hwid, discord_id } = req.body;
     if (!key_value) return res.status(400).json({ error: "key_value wajib diisi." });
     const expiresAt = expires_days ? new Date(Date.now() + expires_days * 86400000) : null;
     const result = await sql`
@@ -40,7 +40,8 @@ module.exports = async function handler(req, res) {
         is_active  = COALESCE(${is_active ?? null}, is_active),
         label      = COALESCE(${label ?? null}, label),
         expires_at = CASE WHEN ${expires_days != null} THEN ${expiresAt} ELSE expires_at END,
-        hwid       = CASE WHEN ${reset_hwid === true} THEN NULL ELSE hwid END
+        hwid       = CASE WHEN ${reset_hwid === true} THEN NULL ELSE hwid END,
+        discord_id = COALESCE(${discord_id ?? null}, discord_id)
       WHERE key_value = ${key_value} RETURNING *`;
     if (result.rows.length === 0) return res.status(404).json({ error: "Key tidak ditemukan." });
     return res.status(200).json({ success: true, key: result.rows[0] });
