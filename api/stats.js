@@ -28,7 +28,12 @@ module.exports = async function handler(req, res) {
       // Mengambil keseluruhan klasemen (Top 10)
       const scripts = await sql`SELECT * FROM stats ORDER BY total_executes DESC LIMIT 10`;
       const users = await sql`SELECT * FROM user_stats ORDER BY total_executes DESC LIMIT 10`;
-      return res.status(200).json({ scripts: scripts.rows, users: users.rows });
+      const totalExecutes = await sql`SELECT SUM(total_executes) as sum FROM stats`;
+      return res.status(200).json({ 
+        scripts: scripts.rows, 
+        users: users.rows,
+        total_overall: totalExecutes.rows[0].sum || 0
+      });
     }
   } catch (err) {
     // Kalau salah satu tabel belom ada (tapi biasanya udah)
