@@ -36,10 +36,12 @@ module.exports = async function handler(req, res) {
     const host = req.headers.host;
     const baseUrl = `${protocol}://${host}`;
 
-    if (!key) {
       const genericLoader = `
 local key = getgenv and getgenv().Key or _G.Key
-if not key then return warn("❌ Key tidak ditemukan! Set getgenv().Key terlebih dahulu.") end
+if not key then
+    game:GetService("Players").LocalPlayer:Kick("❌ Key tidak ditemukan! Set getgenv().Key terlebih dahulu.")
+    return
+end
 local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
 local placeId = tostring(game.PlaceId)
 local univId = tostring(game.GameId)
@@ -47,9 +49,9 @@ local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_i
 local success, result = pcall(function() return game:HttpGet(url) end)
 if success then
     local f, err = loadstring(result)
-    if f then f() else warn(err) end
+    if f then f() else game:GetService("Players").LocalPlayer:Kick("❌ Error Loadstring: " .. tostring(err)) end
 else
-    warn("❌ Gagal menghubungi server.")
+    game:GetService("Players").LocalPlayer:Kick("❌ Gagal menghubungi server.")
 end
       `.trim();
       res.setHeader("Content-Type", "text/plain");
@@ -62,7 +64,7 @@ end
     `;
     if (keyResult.rows.length === 0) {
       res.setHeader("Content-Type", "text/plain");
-      return res.status(200).send('error("Key tidak valid atau sudah expired.")');
+      return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Key tidak valid atau sudah expired.")');
     }
 
     const keyRow = keyResult.rows[0];
@@ -73,7 +75,7 @@ end
         await sql`UPDATE keys SET hwid = ${hwid}, last_used_at = NOW() WHERE key_value = ${key}`;
       } else if (keyRow.hwid !== hwid) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('error("Key ini sudah terikat ke perangkat lain.")');
+        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Key ini sudah terikat ke perangkat lain.")');
       } else {
         await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
       }
@@ -93,7 +95,7 @@ end
       }
       if (!matched) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('error("Tidak ada script untuk game ini.")');
+        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Tidak ada script untuk game ini.")');
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(matched.content);
@@ -104,7 +106,7 @@ end
       const r = await sql`SELECT * FROM scripts WHERE id = ${id} AND is_active = TRUE`;
       if (r.rows.length === 0) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('error("Script tidak ditemukan.")');
+        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Script tidak ditemukan.")');
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(r.rows[0].content);
@@ -119,9 +121,9 @@ local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_i
 local success, result = pcall(function() return game:HttpGet(url) end)
 if success then
     local f, err = loadstring(result)
-    if f then f() else warn(err) end
+    if f then f() else game:GetService("Players").LocalPlayer:Kick("❌ Error Loadstring: " .. tostring(err)) end
 else
-    warn("❌ Gagal menghubungi server.")
+    game:GetService("Players").LocalPlayer:Kick("❌ Gagal menghubungi server.")
 end
     `.trim();
 
