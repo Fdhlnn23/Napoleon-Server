@@ -17,7 +17,9 @@ module.exports = async function handler(req, res) {
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `;
-  try { await sql`ALTER TABLE scripts ADD COLUMN IF NOT EXISTS place_ids TEXT DEFAULT ''`; } catch (e) {}
+  try {
+    await sql`ALTER TABLE scripts ADD COLUMN IF NOT EXISTS place_ids TEXT DEFAULT ''`;
+  } catch (e) {}
 
   const authHeader = req.headers["authorization"] || "";
   const secret = authHeader.replace("Bearer ", "");
@@ -28,7 +30,8 @@ module.exports = async function handler(req, res) {
 
     // Admin list
     if (!key && isAdmin) {
-      const result = await sql`SELECT id, name, content, place_ids, is_active, updated_at FROM scripts ORDER BY id DESC`;
+      const result =
+        await sql`SELECT id, name, content, place_ids, is_active, updated_at FROM scripts ORDER BY id DESC`;
       return res.status(200).json({ scripts: result.rows });
     }
 
@@ -36,12 +39,10 @@ module.exports = async function handler(req, res) {
     const host = req.headers.host;
     const baseUrl = `${protocol}://${host}`;
 
+    if (!key) {
       const genericLoader = `
 local key = getgenv and getgenv().Key or _G.Key
-if not key then
-    game:GetService("Players").LocalPlayer:Kick("❌ Key tidak ditemukan! Set getgenv().Key terlebih dahulu.")
-    return
-end
+if not key then return warn("❌ Key tidak ditemukan! Set getgenv().Key terlebih dahulu.") end
 local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
 local placeId = tostring(game.PlaceId)
 local univId = tostring(game.GameId)
@@ -49,9 +50,9 @@ local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_i
 local success, result = pcall(function() return game:HttpGet(url) end)
 if success then
     local f, err = loadstring(result)
-    if f then f() else game:GetService("Players").LocalPlayer:Kick("❌ Error Loadstring: " .. tostring(err)) end
+    if f then f() else warn(err) end
 else
-    game:GetService("Players").LocalPlayer:Kick("❌ Gagal menghubungi server.")
+    warn("❌ Gagal menghubungi server.")
 end
       `.trim();
       res.setHeader("Content-Type", "text/plain");
@@ -64,7 +65,9 @@ end
     `;
     if (keyResult.rows.length === 0) {
       res.setHeader("Content-Type", "text/plain");
-      return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Key tidak valid atau sudah expired.")');
+      return res
+        .status(200)
+        .send('error("Key tidak valid atau sudah expired.")');
     }
 
     const keyRow = keyResult.rows[0];
@@ -75,7 +78,9 @@ end
         await sql`UPDATE keys SET hwid = ${hwid}, last_used_at = NOW() WHERE key_value = ${key}`;
       } else if (keyRow.hwid !== hwid) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Key ini sudah terikat ke perangkat lain.")');
+        return res
+          .status(200)
+          .send('error("Key ini sudah terikat ke perangkat lain.")');
       } else {
         await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
       }
@@ -83,19 +88,28 @@ end
 
     // Cari script by place_id atau univ_id
     if (place_id || univ_id) {
-      const allScripts = await sql`SELECT * FROM scripts WHERE is_active = TRUE`;
+      const allScripts =
+        await sql`SELECT * FROM scripts WHERE is_active = TRUE`;
       let matched = null;
       for (const s of allScripts.rows) {
         if (!s.place_ids) continue;
-        const ids = s.place_ids.split(",").map(x => x.trim()).filter(Boolean);
-        if ((place_id && ids.includes(String(place_id))) || (univ_id && ids.includes(String(univ_id)))) { 
-          matched = s; 
-          break; 
+        const ids = s.place_ids
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean);
+        if (
+          (place_id && ids.includes(String(place_id))) ||
+          (univ_id && ids.includes(String(univ_id)))
+        ) {
+          matched = s;
+          break;
         }
       }
       if (!matched) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Tidak ada script untuk game ini.")');
+        return res
+          .status(200)
+          .send('error("Tidak ada script untuk game ini.")');
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(matched.content);
@@ -103,10 +117,11 @@ end
 
     // Cari by id
     if (id) {
-      const r = await sql`SELECT * FROM scripts WHERE id = ${id} AND is_active = TRUE`;
+      const r =
+        await sql`SELECT * FROM scripts WHERE id = ${id} AND is_active = TRUE`;
       if (r.rows.length === 0) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send('game:GetService("Players").LocalPlayer:Kick("❌ Script tidak ditemukan.")');
+        return res.status(200).send('error("Script tidak ditemukan.")');
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(r.rows[0].content);
@@ -121,9 +136,9 @@ local url = "${baseUrl}/api/script?key=" .. key .. "&hwid=" .. hwid .. "&place_i
 local success, result = pcall(function() return game:HttpGet(url) end)
 if success then
     local f, err = loadstring(result)
-    if f then f() else game:GetService("Players").LocalPlayer:Kick("❌ Error Loadstring: " .. tostring(err)) end
+    if f then f() else warn(err) end
 else
-    game:GetService("Players").LocalPlayer:Kick("❌ Gagal menghubungi server.")
+    warn("❌ Gagal menghubungi server.")
 end
     `.trim();
 
@@ -134,14 +149,18 @@ end
   if (req.method === "POST") {
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
     const { name, content, place_ids, id } = req.body;
-    if (!content) return res.status(400).json({ error: "Content script kosong." });
+    if (!content)
+      return res.status(400).json({ error: "Content script kosong." });
     const placeIdsClean = (place_ids || "").toString().trim();
     if (id) {
-      const result = await sql`UPDATE scripts SET name=${name||"Script"}, content=${content}, place_ids=${placeIdsClean}, updated_at=NOW() WHERE id=${id} RETURNING *`;
-      if (result.rows.length === 0) return res.status(404).json({ error: "Script tidak ditemukan." });
+      const result =
+        await sql`UPDATE scripts SET name=${name || "Script"}, content=${content}, place_ids=${placeIdsClean}, updated_at=NOW() WHERE id=${id} RETURNING *`;
+      if (result.rows.length === 0)
+        return res.status(404).json({ error: "Script tidak ditemukan." });
       return res.status(200).json({ success: true, script: result.rows[0] });
     } else {
-      const result = await sql`INSERT INTO scripts (name, content, place_ids) VALUES (${name||"Script"}, ${content}, ${placeIdsClean}) RETURNING *`;
+      const result =
+        await sql`INSERT INTO scripts (name, content, place_ids) VALUES (${name || "Script"}, ${content}, ${placeIdsClean}) RETURNING *`;
       return res.status(201).json({ success: true, script: result.rows[0] });
     }
   }
