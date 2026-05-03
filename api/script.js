@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
   const isAdmin = secret === process.env.API_SECRET;
 
   if (req.method === "GET") {
-    return res.status(403).json({ message: "Shutdown mode." });
+    // return res.status(403).json({ message: "Shutdown mode." });
     const { key, hwid, place_id, univ_id, id } = req.query;
 
     // Admin list
