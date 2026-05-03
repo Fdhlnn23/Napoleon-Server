@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
     }
 
     const protocol = req.headers["x-forwarded-proto"] || "http";
-    const host = req.headers.host;
+    const host = req.headers.host; 
     const baseUrl = `${protocol}://${host}`;
 
     if (!key) {
