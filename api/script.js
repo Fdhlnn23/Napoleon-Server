@@ -20,6 +20,7 @@ local function showWarningUI(message)
 
     ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.SafeAreaCompatibility = Enum.SafeAreaCompatibility.None
 
     Background.Name = "Background"
     Background.Parent = ScreenGui
