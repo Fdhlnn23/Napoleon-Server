@@ -162,7 +162,7 @@ module.exports = async function handler(req, res) {
 
     if (!key) {
       const genericLoader = `local key = getgenv and getgenv().Key or _G.Key
-if not key then return warn("Key tidak ditemukan! Set getgenv().Key terlebih dahulu.") end
+if not key then return warn("Key not found! Please set getgenv().Key first.") end
 local hwid = tostring(game:GetService("Players").LocalPlayer.UserId)
 local placeId = tostring(game.PlaceId)
 local univId = tostring(game.GameId)
@@ -172,7 +172,7 @@ if success then
     local f, err = loadstring(result)
     if f then f() else warn(err) end
 else
-    warn("Gagal menghubungi server.")
+    warn("Failed to connect to server.")
 end`;
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(genericLoader);
@@ -184,7 +184,7 @@ end`;
     `;
     if (keyResult.rows.length === 0) {
       res.setHeader("Content-Type", "text/plain");
-      return res.status(200).send(getErrorScript("Key tidak valid atau sudah expired."));
+      return res.status(200).send(getErrorScript("Key is invalid or has expired."));
     }
 
     const keyRow = keyResult.rows[0];
@@ -195,7 +195,7 @@ end`;
         await sql`UPDATE keys SET hwid = ${hwid}, last_used_at = NOW() WHERE key_value = ${key}`;
       } else if (keyRow.hwid !== hwid) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send(getErrorScript("Key ini sudah terikat ke perangkat lain."));
+        return res.status(200).send(getErrorScript("This key is already bound to another device."));
       } else {
         await sql`UPDATE keys SET last_used_at = NOW() WHERE key_value = ${key}`;
       }
@@ -222,7 +222,7 @@ end`;
       }
       if (!matched) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send(getErrorScript("Tidak ada script untuk game ini."));
+        return res.status(200).send(getErrorScript("No script available for this game."));
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(matched.content);
@@ -234,7 +234,7 @@ end`;
         await sql`SELECT * FROM scripts WHERE id = ${id} AND is_active = TRUE`;
       if (r.rows.length === 0) {
         res.setHeader("Content-Type", "text/plain");
-        return res.status(200).send(getErrorScript("Script tidak ditemukan."));
+        return res.status(200).send(getErrorScript("Script not found."));
       }
       res.setHeader("Content-Type", "text/plain");
       return res.status(200).send(r.rows[0].content);
@@ -250,7 +250,7 @@ if success then
     local f, err = loadstring(result)
     if f then f() else warn(err) end
 else
-    warn("Gagal menghubungi server.")
+    warn("Failed to connect to server.")
 end`;
 
     res.setHeader("Content-Type", "text/plain");
@@ -267,7 +267,7 @@ end`;
       const result =
         await sql`UPDATE scripts SET name=${name || "Script"}, content=${content}, place_ids=${placeIdsClean}, updated_at=NOW() WHERE id=${id} RETURNING *`;
       if (result.rows.length === 0)
-        return res.status(404).json({ error: "Script tidak ditemukan." });
+        return res.status(404).json({ error: "Script not found." });
       return res.status(200).json({ success: true, script: result.rows[0] });
     } else {
       const result =
@@ -284,5 +284,5 @@ end`;
     return res.status(200).json({ success: true });
   }
 
-  return res.status(405).json({ error: "Method tidak diizinkan." });
+  return res.status(405).json({ error: "Method not allowed." });
 };
