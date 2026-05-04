@@ -1,1 +1,1 @@
-adan ganteng
+adan gantengg
