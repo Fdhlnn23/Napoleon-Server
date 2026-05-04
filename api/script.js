@@ -71,7 +71,7 @@ local function showWarningUI(message)
     Key.Position = UDim2.new(0.22862418, 0, 0.550000012, 0)
     Key.Size = UDim2.new(0.533663452, 0, 0.154971421, 0)
     Key.Font = Enum.Font.GothamBold
-    Key.Text = "discord.gg/napoleonsc"
+    Key.Text = "discord.gg/napoleonontop"
     Key.TextColor3 = Color3.fromRGB(106, 106, 124)
     Key.TextScaled = true
     Key.TextSize = 14.000
