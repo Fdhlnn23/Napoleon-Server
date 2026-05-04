@@ -1,4 +1,4 @@
-const { sql } = require("@vercel/postgres");
+const { sql } = require("./db");
 const { v4: uuidv4 } = require("uuid");
 
 function checkSecret(req) {
