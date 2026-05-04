@@ -37,6 +37,7 @@ module.exports = async function handler(req, res) {
     if (result.rows.length === 0) {
       responseObj = { valid: false, message: "Key tidak valid atau sudah expired." };
       return res.status(200).send(encryptXOR(JSON.stringify(responseObj), SECRET_KEY));
+      
     }
 
     const row = result.rows[0];
