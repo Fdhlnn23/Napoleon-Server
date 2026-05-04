@@ -1,4 +1,4 @@
-const { sql } = require("@vercel/postgres");
+const { sql } = require("./db");
 
 module.exports = async function handler(req, res) {
   const { secret } = req.query;
