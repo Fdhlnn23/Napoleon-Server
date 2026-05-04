@@ -1,4 +1,4 @@
-const { sql } = require("@vercel/postgres");
+const { sql } = require("./db");
 
 // KATA SANDI RAHASIA (Ganti dengan kata sandi yang rumit)
 const SECRET_KEY = process.env.SURIKITI;
