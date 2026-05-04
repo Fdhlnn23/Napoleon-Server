@@ -1,4 +1,4 @@
-const { sql } = require("@vercel/postgres");
+const { sql } = require("./db");
 
 // Kirim execute log ke Discord channel sebagai Bot (Component V2)
 async function sendExecuteLog({ script, userid, username, executor, placeid, key, totalExecution, ownerKey }) {
